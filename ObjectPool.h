@@ -19,7 +19,7 @@ using std::endl;
 inline static void* SystemAlloc(size_t kpage)
 {
 #ifdef _WIN32
-    void* ptr = VirtualAlloc(0, kpage<<13, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	void* ptr = VirtualAlloc(0, kpage<<13, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 #else
 	// linux下brk mmap等
 #endif
@@ -30,11 +30,12 @@ inline static void* SystemAlloc(size_t kpage)
 	return ptr;
 }
 
+// 定长内存池
 template<class T>
-class ObjectPool
+class ObjectPool 
 {
 public:
-	T* New()
+	T* New()  // 创建对象
 	{
 		T* obj = nullptr;
 
@@ -51,8 +52,10 @@ public:
 			if (_remainBytes < sizeof(T))
 			{
 				_remainBytes = 128 * 1024;
-				//_memory = (char*)malloc(_remainBytes);
-				_memory = (char*)SystemAlloc(_remainBytes >> 13);
+				//_memory = (char*)malloc(_remainBytes); //从堆（heap）上分配,小块内存快，大块内存可能慢
+				_memory = (char*)SystemAlloc(_remainBytes >> 13); // 直接向操作系统申请虚拟地址空间,大块内存更直接、更高效
+				// 即传入 kpage = 16，表示申请16 页，共 128KB 内存
+
 				if (_memory == nullptr)
 				{
 					throw std::bad_alloc();
@@ -88,6 +91,7 @@ private:
 	void* _freeList = nullptr; // 还回来过程中链接的自由链表的头指针
 };
 
+// 性能测试
 struct TreeNode
 {
 	int _val;
