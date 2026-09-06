@@ -1,13 +1,17 @@
 #include <iostream>
 #include <vector>
 #include <time.h>
+#include <stdlib.h>
+
 using std::cout;
 using std::endl;
 
 #ifdef _WIN32
 	#include<windows.h>
 #else
-// 
+	#include<unistd.h>
+	#include<sys/mman.h>
+	#include<sys/types.h>
 #endif
 
 // 定长内存池
@@ -22,6 +26,7 @@ inline static void* SystemAlloc(size_t kpage)
 	void* ptr = VirtualAlloc(0, kpage<<13, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 #else
 	// linux下brk mmap等
+	void* ptr = mmap(nullptr, kpage<<13, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 #endif
 
 	if (ptr == nullptr)
